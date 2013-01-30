@@ -18,9 +18,8 @@ Usage:
   $(basename $0) COMMAND
 
   Available commands:
-$(ListAllCommands)
-  "
-  exit 0
+$(ListAllCommands)" 1>&2
+  exit 1
 fi
 
 ws-$*
