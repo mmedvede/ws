@@ -1,0 +1,16 @@
+# bash completion for ws
+
+have ws &&
+    _ws()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts=$( echo -n $PATH | xargs -d : -I {} find {} -name ws-* -maxdepth 1 \
+        -executable -type f -printf '\t%P\n'  | sed s/ws-// |sort -u)
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}))
+} &&
+    complete -F _ws ws
+
+# ex: ts=4 sw=4 et filetype=sh
