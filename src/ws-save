@@ -5,21 +5,51 @@
 set -e
 set -u
 
-if [ -z "$*" ]; then
+if [ "$*" = "--help" -o "$*" = "-h" ]; then
   echo "Usage:
-  $(basename $0) <output file> [<workspace folder to save>]" 1>&2
+  $(basename $0) [<workspace_path> [<output_filename>] ]
+
+  <workspace_path>: Path to the workspace that you want to save.
+    If omitted, assume <workspace_path>=ROS_WORKSPACE.
+    If no ROS_WORKSPACE is set, assume <workspace_path>=pwd.
+
+  <output_filename>: Specify where the generated rosinstall would be saved.
+    If not specified, use <workspace_path>/ and save into subfolder with postfix -workspace.
+    For example, if <workspace_path> is sandbox, would save into sandbox/sandbox-workspace/workspace.rosinstall" 1>&2
   exit 0
 fi
-output_file=$1
 
-if [ -z "${2-}" ]; then
-  working_dir=$(pwd)
-elif [ -d "$2" ]; then
-  working_dir=$2
+if [ -z "$*" ]; then
+# Case for no arguments
+  if [ -z "${ROS_WORKSPACE+defined}" ] || [ -z "$ROS_WORKSPACE" ]; then 
+    working_dir=$(pwd)
+    echo "ROS_WORKSPACE empty/not defined."
+  else
+    working_dir=$ROS_WORKSPACE
+  fi
 else
-  echo "$2 is not a directory" 1>&2
-  exit 1
+# Workspace path is specified
+  if [ -d "$1" ]; then
+    working_dir=$1
+  else
+    echo "$1 is not a directory" 1>&2
+    exit 1
+  fi
 fi
+
+if [ -z "${2+defined}" ] || [ -z "$2" ]; then
+  # Save location is not specified, use default
+  output_file=$working_dir/$(basename $working_dir)-workspace/workspace.rosinstall
+else
+  output_file=$2
+fi
+
+if [ ! -e "$(dirname $output_file)" ]; then
+  # Create directory if does not exists
+  mkdir "$(dirname $output_file)"
+fi
+echo "Saving $working_dir workspace into $output_file"
+
 
 pushd $working_dir > /dev/null
 
