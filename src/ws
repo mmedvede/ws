@@ -1,0 +1,26 @@
+#! /usr/bin/env bash
+# ws- entry point
+# Author: Mikhail Medvedev <mmedvede@cs.uml.edu>
+
+set -e
+set -u
+
+#http://stackoverflow.com/questions/948008/linux-command-to-list-all-available-commands-and-aliases
+ListAllCommands()
+{
+  echo -n $PATH | xargs -d : -I {} find {} -name $(basename $0)-* -maxdepth 1 \
+    -executable -type f -printf '\t%P\n'  | sed s/$(basename $0)-// |sort -u 
+}
+
+if [ -z "$*" ]; then
+  echo "Workspace tools.
+Usage:
+  $(basename $0) COMMAND
+
+  Available commands:
+$(ListAllCommands)
+  "
+  exit 0
+fi
+
+ws-$*
