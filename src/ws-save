@@ -36,6 +36,8 @@ else
     exit 1
   fi
 fi
+# Expand relative paths
+working_dir=$(cd $working_dir && pwd)
 
 if [ -z "${2+defined}" ] || [ -z "$2" ]; then
   # Save location is not specified, use default
