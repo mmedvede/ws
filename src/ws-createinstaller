@@ -1,0 +1,43 @@
+#! /usr/bin/env bash
+# Create workspace meta package that contains .rosinstall file (generated using ws-save)
+# and minimal initialization script
+
+set -e
+set -u
+
+# This has to be in sync with the one ws-save uses
+POSTFIX="-workspace"
+
+
+# Do not do anything if the metapackage already exists
+metapack_dir=$(basename $(pwd))$POSTFIX
+if [ -e "$metapack_dir" ]; then
+  echo "$metapack_dir already exists."
+  exit 1
+fi
+# Expand path
+mkdir $metapack_dir
+metapack_dir=$(cd $metapack_dir && pwd)
+
+# Generate .rosinstall
+echo "Saving current directory as a workspace.rosinstall"
+ws-save .
+
+
+SCRIPT_PATH=$metapack_dir/initialize
+touch $SCRIPT_PATH
+chmod +x $SCRIPT_PATH
+
+echo "Creating $SCRIPT_PATH"
+# TODO
+script="# Workspace initialization script
+"
+
+echo $script > $SCRIPT_PATH
+
+echo "Putting it under git vcs"
+
+pushd $metapack_dir > /dev/null
+git init && git add . && git commit -am"[$(basename $0)] initial: saves $(basename $(dirname $metapack_dir)) workspace"
+
+echo "Done"
