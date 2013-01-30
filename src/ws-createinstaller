@@ -12,7 +12,7 @@ POSTFIX="-workspace"
 # Do not do anything if the metapackage already exists
 metapack_dir=$(basename $(pwd))$POSTFIX
 if [ -e "$metapack_dir" ]; then
-  echo "$metapack_dir already exists."
+  echo "$metapack_dir already exists." 1>&2
   exit 1
 fi
 # Expand path
