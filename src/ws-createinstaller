@@ -24,19 +24,215 @@ echo "Saving current directory as a workspace.rosinstall"
 ws-save .
 
 
+# We still are tied in with ROS.
+# The behavior is to use current ROS according to "rosversion", fallback on the
+# latest ROS in /opt/ros, and if no ROS there, fail.
+get_rosversion()
+{
+  if [ -z "$(rosversion -d)" -o "$(rosversion -d)" = "<unknown>" ]; then
+    if [ -d /opt/ros  ]; then
+      __version=$(find /opt/ros -maxdepth 1 -type d -printf '%P\n' | sort | tail -1)
+      if [ -z "$__version" ]; then
+        echo "No ROS installation found."
+        return 1
+      else
+        echo $__version
+      fi
+    fi
+  else
+    rosversion -d
+  fi
+}
+
+# Also do not do anything if no ROS
+__ros_version=$(get_rosversion) || exit 1 
+echo "Using ROS $__ros_version"
+
+
 SCRIPT_PATH=$metapack_dir/initialize
-touch $SCRIPT_PATH
-chmod +x $SCRIPT_PATH
-
 echo "Creating $SCRIPT_PATH"
-# TODO
-script="# Workspace initialization script
-"
+echo \
+  '#! /usr/bin/env bash
+# Workspace initialization script.
 
-echo $script > $SCRIPT_PATH
+WSRC=.roswsrc
+WSRC_PATH=''~/''$WSRC
+ENV_FILE=''~/ros_env.sh''
+
+set -e
+
+# Check for correct ROS version and source corresponding setup.bash
+ROS_VERSION='$__ros_version'
+if [ -z "$(rosversion -d)" -o "$(rosversion -d)" = "<unknown>" ]; then
+  __default_ros=/opt/ros/$ROS_VERSION
+  echo "No ROS on path, trying default at $__default_ros"
+  if [ -e "$__default_ros/setup.bash" ]; then
+    echo "Found ROS at $__default_ros"
+    source $__default_ros/setup.bash
+  else
+    echo "Make sure the ROS is properly configured / on the path"
+    exit 1
+  fi
+elif [ "$(echo $ROS_VERSION | head -c1)" != "$(rosversion -d | head -c1)" ]; then
+  echo "This workspace is expecting ROS $ROS_VERSION, detected $(rosversion -d)" 1>&2
+  exit 1
+fi
+# At this point we should have ROS setup.bash sourced.
+
+thisdir=$(cd $(dirname $0); pwd)
+thisdirname=$(basename $thisdir)
+name=$(echo $thisdirname | rev | cut -d"-" -f2- | rev) # Use "-" as separator, gitorious can not handle dots
+updir=$(dirname $thisdir)
+updirname=$(basename $updir)
+
+if [ "$updirname" != "$name" ];then
+  echo "Make sure ''$thisdirname'' is located inside ''$name'' as follows: $name/$thisdirname (the names should match).
+  The workspace would be initialized in the parent directory." 1>&2
+  exit 1
+fi
+
+# Some error handling
+success=""
+__unsuccessfull_exit(){
+  if [ -z "$success" ]; then
+    echo "
+    ========================================
+    Initialization script did not go
+    all the way!  Check the errors
+    ========================================
+    "
+  fi
+}
+trap ''__unsuccessfull_exit'' EXIT
+
+
+ROSWS_INSTALL_DIR=$updir
+ROSINSTALL_FILE=$thisdir/workspace.rosinstall
+
+initializePrerequisites(){
+  echo "
+  ========================================
+  Setting up tools required to initialize workspace
+  ========================================
+
+  "
+  sudo apt-get install -y --force-yes python-rosinstall python-rosdep
+  sudo rosdep init && rosdep update
+}
+
+initializeWorkspace()
+{
+  echo "
+  ========================================
+  Initializing workspace: $ROSINSTALL_FILE
+  ========================================
+
+  "
+  # Overlay over current ROS environment
+  rosinstall $ROSWS_INSTALL_DIR $(dirname $(dirname $ROS_ROOT)) $ROSINSTALL_FILE
+
+  source $ROSWS_INSTALL_DIR/setup.bash
+}
+
+buildWorkspace(){
+  echo "
+  ========================================
+  Building workspace
+  ========================================
+
+  "
+  rosmake -a 
+}
+
+initializeEclipseProjects(){
+  echo "
+  ========================================
+  Building workspace eclipse projects
+  ========================================
+
+  "
+  rosmake -a --target=eclipse-project
+}
+
+createEnvLoader(){
+  echo "(Over)writing $ENV_FILE"
+echo '"'"'#!/bin/sh
+# ROS Environment loader for roslaunch.
+# This file may be overwritten next time *-workspace/initialize is run.
+# The file is part of one of ROS workspaces.
+# mmedvede@cs.uml.edu
+
+__this_dir=$(dirname $0)
+unset ROS_WORKSPACE
+. $__this_dir/$WSRC
+
+if [ -z "$ROS_WORKSPACE" ]; then
+  echo "Error: $__this_dir/$WSRC has to export ROS_WORKSPACE" 1>&2
+  exit 1
+fi
+
+if [ $# -eq 0 ] ; then
+  /bin/echo "Entering environment at $ROS_WORKSPACE"
+  . $ROS_WORKSPACE/setup.sh
+  $SHELL
+  /bin/echo "Exiting build environment at $ROS_WORKSPACE"
+else
+  . $ROS_WORKSPACE/setup.sh
+  exec "$@"
+fi'"'"' > $ENV_FILE
+  chmod +x $ENV_FILE
+}
+
+
+createWorkspaceRC(){
+  echo "(Over)writing $WSRC_PATH"
+echo "# Current ROS workspace setting.
+# This may be overwritten next time the *-workspace/initialize script is run.
+# Feel free to edit this to manually switch the workspace.
+# The file is sourced both by ~/.bashrc and ~/ros_env.sh to obtain the current ROS workspace
+# ros_env.sh can be used in roslaunch with machine tag.
+export ROS_WORKSPACE=$ROSWS_INSTALL_DIR
+
+# Stop for non-interactive shells 
+if [ "'"'"'$-'"'"'" = "'"'"'*i*'"'"'" ]; then return 0; fi
+# 
+source "'"'"'$ROS_WORKSPACE'"'"'"/setup.bash
+
+# Below is the place to put non-essential commands that 
+# would be run each time a new interactive shell is opened.
+# System should not depend on these to be run.
+# An example is to print out the workspace state, help messages, etc.
+" > $WSRC_PATH
+}
+
+successMessage(){
+  echo "
+  ========================================
+  Done. To start using the workspace: 
+
+  source $ROSWS_INSTALL_DIR/setup.bash
+  or
+  source $WSRC_PATH # May contain additional ws customization
+
+  Alternatively, add either to your ~/.bashrc
+  ========================================
+  "
+}
+
+initializePrerequisites
+initializeWorkspace
+buildWorkspace
+initializeEclipseProjects
+createEnvLoader
+createWorkspaceRC
+successMessage
+
+success="yes"
+' \
+  > $SCRIPT_PATH && chmod +x $SCRIPT_PATH
+
 
 echo "Putting it under git vcs"
-
 pushd $metapack_dir > /dev/null
 git init && git add . && git commit -am"[$(basename $0)] initial: saves $(basename $(dirname $metapack_dir)) workspace"
 
