@@ -219,7 +219,7 @@ echo "# Current ROS workspace setting.
 export ROS_WORKSPACE=$ROSWS_INSTALL_DIR
 
 # Stop for non-interactive shells 
-if [ "'"'"'$-'"'"'" = "'"'"'*i*'"'"'" ]; then return 0; fi
+if [ ""'"'$-'"'"" = ""'"'*i*'"'"" ]; then return 0; fi
 # 
 source "'"'"'$ROS_WORKSPACE'"'"'"/setup.bash
 
