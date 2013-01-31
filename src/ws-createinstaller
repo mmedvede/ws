@@ -119,14 +119,28 @@ __exec_longrunning(){
   echo $no_color
 }
 
+__source_hooks(){
+  # would source files in alphabetical order in the folder $1
+  # Not sure what variables should be available to sourced files.
+  if [ ! -e $1 ]; then
+    return
+  fi
+  __draw_line + "sourcing files in $1" $bwite
+  files=$(find $1 -maxdepth 1 -type f | sort)
+  for file in $files; do
+    echo "$bwite$(basename $file)"
+    source $file
+  done
+}
+
 # Some error handling
 success=""
 __unsuccessfull_exit(){
   if [ -z "$success" ]; then
     __draw_line ^ "Did not finish, check any errors" $red
   fi
-}
-trap ''__unsuccessfull_exit'' EXIT
+} &&
+  trap ''__unsuccessfull_exit'' EXIT
 
 
 #####################################################
@@ -226,8 +240,10 @@ successMessage(){
 
 initializePrerequisites
 initializeWorkspace
+__source_hooks $thisdir/hooks/prebuild
 buildWorkspace
-#initializeEclipseProjects
+initializeEclipseProjects
+__source_hooks $thisdir/hooks/postbuild
 createEnvLoader
 createWorkspaceRC
 successMessage
