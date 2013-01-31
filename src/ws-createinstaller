@@ -114,8 +114,14 @@ __draw_line(){
 }
 
 __exec_longrunning(){
-  echo -n "$*$grey "
-  $* | xargs -I {} echo -n .
+  echo "$*$grey "
+  $* 2>&1 | cut -b1-$(tput cols) | sed -u "i\\o033[2K" | stdbuf -o0 tr "\n" "\r"
+  echo $no_color
+}
+
+__exec(){
+  echo "$*$grey "
+  $*
   echo $no_color
 }
 
@@ -160,7 +166,7 @@ initializeWorkspace()
 {
   __draw_line + "Initializing workspace: $ROSINSTALL_FILE"
   # Overlay over current ROS environment
-  __exec_longrunning rosinstall $ROSWS_INSTALL_DIR $(dirname $(dirname $ROS_ROOT)) $ROSINSTALL_FILE
+  __exec rosinstall $ROSWS_INSTALL_DIR $(dirname $(dirname $ROS_ROOT)) $ROSINSTALL_FILE
 
   source $ROSWS_INSTALL_DIR/setup.bash
 }
