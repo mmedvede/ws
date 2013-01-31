@@ -157,9 +157,7 @@ ROSINSTALL_FILE=$thisdir/workspace.rosinstall
 
 initializePrerequisites(){
   __draw_line + "Setting up tools required to initialize the workspace"
-  __exec_longrunning sudo apt-get install -y --force-yes python-rosinstall python-rosdep
-  __exec_longrunning sudo rosdep init  || echo "Ignoring rosdep init error"
-  __exec_longrunning rosdep update 
+  __exec_longrunning sudo apt-get install -y --force-yes python-rosinstall 
 }
 
 initializeWorkspace()
