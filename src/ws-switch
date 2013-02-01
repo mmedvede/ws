@@ -39,8 +39,12 @@ if [ ! -f "$initialize_script" ]; then
   echo "$dir is not a supported workspace, no $initialize_script found" 1>&2
   exit 1
 fi
-
-$initialize_script generate-workspace-rc > $WSRC_PATH 
-echo "(Over)writing $WSRC_PATH
+if [ -n "$(grep "initialize-generate-workspace-rc" $initialize_script)" ]; then
+  $initialize_script generate-workspace-rc > $WSRC_PATH 
+  echo "(Over)writing $WSRC_PATH
   Successfully switched to $(basename $dir).
   Source $WSRC to use the selected workspace."
+else
+  echo "$initialize_script is not a correct version." 1>&2
+  exit 1
+fi
