@@ -89,7 +89,7 @@ updir=$(dirname $thisdir)
 updirname=$(basename $updir)
 
 if [ "$updirname" != "$name" ];then
-  echo "Make sure ''$thisdirname'' is located inside ''$name'' as follows: $name/$thisdirname (the names should match).
+  echo "Make sure $thisdirname is located inside $name as follows: $name/$thisdirname (the names should match).
   The workspace would be initialized in the parent directory." 1>&2
   exit 1
 fi
@@ -146,7 +146,7 @@ __unsuccessfull_exit(){
     __draw_line ^ "Did not finish, check any errors" $red
   fi
 } &&
-  trap ''__unsuccessfull_exit'' EXIT
+  trap __unsuccessfull_exit EXIT
 
 
 #####################################################
@@ -185,7 +185,6 @@ echo '"'"'#!/bin/sh
 # ROS Environment loader for roslaunch.
 # This file may be overwritten next time *-workspace/initialize is run.
 # The file is part of one of ROS workspaces.
-# mmedvede@cs.uml.edu
 
 __this_dir=$(dirname $0)
 unset ROS_WORKSPACE
