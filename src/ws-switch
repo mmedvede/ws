@@ -1,0 +1,46 @@
+#! /usr/bin/env bash
+# Switch the current workspace.
+# Regenerates ~/.roswsrc based on selected workspace.
+# author: Mikahil Medvedev <mmedvede@cs.uml.edu>
+
+set -e
+set -u
+
+# This has to be in sync with the one ws-save uses
+POSTFIX="-workspace"
+
+WSRC=.roswsrc
+WSRC_PATH=~/$WSRC
+
+if [ "$*" = "--help" -o "$*" = "-h" ]; then
+  echo "Usage:
+  $(basename $0) [<workspace_path>]
+
+  <workspace_path>: Location of the new workspace to switch into.
+    If omitted, try using current directory as a workspace." 1>&2
+  exit 0
+fi
+
+if [ -z "$*" ]; then
+  # Case for no arguments
+  dir=$(pwd)
+else
+  dir=$1
+fi
+if [ -d "$dir" ]; then 
+  # Expand relative paths
+  dir=$(cd $dir && pwd)
+else
+  echo "$dir is not a directory." 1>&2
+  exit 1
+fi
+initialize_script=$dir/$(basename $dir)$POSTFIX/initialize
+if [ ! -f "$initialize_script" ]; then
+  echo "$dir is not a supported workspace, no $initialize_script found" 1>&2
+  exit 1
+fi
+
+$initialize_script generate-workspace-rc > $WSRC_PATH 
+echo "(Over)writing $WSRC_PATH
+  Successfully switched to $(basename $dir).
+  Source $WSRC to use the selected workspace."
