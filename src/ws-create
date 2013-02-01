@@ -153,12 +153,12 @@ __unsuccessfull_exit(){
 ROSWS_INSTALL_DIR=$updir
 ROSINSTALL_FILE=$thisdir/workspace.rosinstall
 
-initializePrerequisites(){
+initialize-prerequisites(){
   __draw_line + "Setting up tools required to initialize the workspace"
   __exec_longrunning sudo apt-get install -y --force-yes python-rosinstall 
 }
 
-initializeWorkspace()
+initialize-workspace()
 {
   __draw_line + "Initializing workspace: $ROSINSTALL_FILE"
   # Overlay over current ROS environment
@@ -167,18 +167,17 @@ initializeWorkspace()
   source $ROSWS_INSTALL_DIR/setup.bash
 }
 
-buildWorkspace(){
+initialize-build-workspace(){
   __draw_line + "Building the workspace"
   __exec_longrunning rosmake -a 
 }
 
-initializeEclipseProjects(){
+initialize-eclipse-projects(){
   __draw_line + "Building workspace eclipse projects"
   __exec_longrunning rosmake -a --target=eclipse-project 
 }
 
-createEnvLoader(){
-  __draw_line + "(Over)writing $ENV_FILE"
+initialize-generate-env-loader(){
 echo '"'"'#!/bin/sh
 # ROS Environment loader for roslaunch.
 # This file may be overwritten next time *-workspace/initialize is run.
@@ -201,13 +200,17 @@ if [ $# -eq 0 ] ; then
 else
   . $ROS_WORKSPACE/setup.sh
   exec "$@"
-fi'"'"' > $ENV_FILE
+fi'"'"'
+}
+
+initialize-write-env-loader(){
+__draw_line + "(Over)writing $ENV_FILE"
+initialize-generate-env-loader  > $ENV_FILE &&
   chmod +x $ENV_FILE
 }
 
 
-createWorkspaceRC(){
-  __draw_line + "(Over)writing $WSRC_PATH"
+initialize-generate-workspace-rc(){
 echo "# Current ROS workspace setting.
 # This may be overwritten next time the *-workspace/initialize script is run.
 # Feel free to edit this to manually switch the workspace.
@@ -224,11 +227,15 @@ source "'"'"'$ROS_WORKSPACE'"'"'"/setup.bash
 # would be run each time the script is sourced from interactive shell.
 # There are no guarantees that it would be sourced, so 
 # your system should not depend on these to work properly.
-# An example is to print out the workspace state, help messages, etc.
-" > $WSRC_PATH
+# An example is to print out the workspace state, help messages, etc."
 }
 
-successMessage(){
+initialize-write-workspace-rc(){
+  __draw_line + "(Over)writing $WSRC_PATH"
+  initialize-generate-workspace-rc > $WSRC_PATH
+}
+
+success-message(){
   __draw_line = Done $green
   echo "
   ## To start using the workspace: 
@@ -239,18 +246,19 @@ successMessage(){
   "
 }
 
+
 if [ -z "$*" ]; then
   __draw_line = "Workspace initialization script for $name"
 
-  initializePrerequisites
-  initializeWorkspace
+  initialize-prerequisites
+  initialize-workspace
   __source_hooks $thisdir/hooks/prebuild
-  buildWorkspace
-  initializeEclipseProjects
+  initialize-build-workspace
+  initialize-eclipse-projects
   __source_hooks $thisdir/hooks/postbuild
-  createEnvLoader
-  createWorkspaceRC
-  successMessage
+  initialize-write-env-loader
+  initialize-write-workspace-rc
+  success-message
 else
   initialize-$*
 fi
