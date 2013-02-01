@@ -1,0 +1,15 @@
+# bash completion for ws
+
+have ws &&
+    _initialize()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts=$(cat initialize | perl -ne 'm/initialize-(.*)\(+/; print "$1\n" ')
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}))
+} &&
+    complete -F _initialize ./initialize
+
+# ex: ts=4 sw=4 et filetype=sh
