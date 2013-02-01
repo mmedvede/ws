@@ -66,14 +66,15 @@ set -e
 
 # Check for correct ROS version and source corresponding setup.bash
 ROS_VERSION='$__ros_version'
+
 if [ -z "$(rosversion -d)" -o "$(rosversion -d)" = "<unknown>" ]; then
   __default_ros=/opt/ros/$ROS_VERSION
-  echo "No ROS on path, trying default at $__default_ros"
+  echo "No ROS on path, trying default at $__default_ros" 1>&2
   if [ -e "$__default_ros/setup.bash" ]; then
-    echo "Found ROS at $__default_ros"
+    echo "Found ROS at $__default_ros" 1>&2
     source $__default_ros/setup.bash
   else
-    echo "Make sure the ROS is properly configured / on the path"
+    echo "Make sure the ROS is properly configured / on the path" 1>&2
     exit 1
   fi
 elif [ "$(echo $ROS_VERSION | head -c1)" != "$(rosversion -d | head -c1)" ]; then
@@ -148,9 +149,6 @@ __unsuccessfull_exit(){
 } &&
   trap __unsuccessfull_exit EXIT
 
-
-#####################################################
-__draw_line = "Workspace initialization script for $name"
 
 ROSWS_INSTALL_DIR=$updir
 ROSINSTALL_FILE=$thisdir/workspace.rosinstall
@@ -241,15 +239,21 @@ successMessage(){
   "
 }
 
-initializePrerequisites
-initializeWorkspace
-__source_hooks $thisdir/hooks/prebuild
-buildWorkspace
-initializeEclipseProjects
-__source_hooks $thisdir/hooks/postbuild
-createEnvLoader
-createWorkspaceRC
-successMessage
+if [ -z "$*" ]; then
+  __draw_line = "Workspace initialization script for $name"
+
+  initializePrerequisites
+  initializeWorkspace
+  __source_hooks $thisdir/hooks/prebuild
+  buildWorkspace
+  initializeEclipseProjects
+  __source_hooks $thisdir/hooks/postbuild
+  createEnvLoader
+  createWorkspaceRC
+  successMessage
+else
+  initialize-$*
+fi
 
 success="yes"
 ' \
