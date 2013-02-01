@@ -7,8 +7,12 @@ have ws &&
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts=$( echo -n $PATH | xargs -d : -I {} find {} -name ws-* -maxdepth 1 \
+    if [ "$prev" = "switch" -o "$prev" = "select" ]; then
+        opts=$(ws-list)
+    else
+        opts=$( echo -n $PATH | xargs -d : -I {} find {} -name ws-* -maxdepth 1 \
         -executable -type f -printf '\t%P\n'  | sed s/ws-// |sort -u)
+    fi
     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}))
 } &&
     complete -F _ws ws

@@ -9,7 +9,5 @@ set -u
 # This has to be in sync with the one ws-save uses
 POSTFIX="-workspace"
 DEPTH=3
-echo -e "Workspaces found in $HOME, search depth $DEPTH:\n"
 
-#find ~ -maxdepth $DEPTH -wholename *$POSTFIX/initialize | xargs -I {} dirname {} 
 find ~ -maxdepth $DEPTH -wholename *$POSTFIX/initialize | sed -e "s/\/[^\/]*$POSTFIX.*//g"
