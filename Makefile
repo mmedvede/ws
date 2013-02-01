@@ -1,5 +1,5 @@
-all: install
-
 install:
-	sudo cp src/* /usr/local/bin
-	sudo cp bash_completion/* /etc/bash_completion.d/
+	cp src/* $(DESTDIR)/usr/local/bin
+	cp bash_completion/* $(DESTDIR)/etc/bash_completion.d/
+
+.PHONY: install
