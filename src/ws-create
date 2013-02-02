@@ -54,12 +54,12 @@ fi
 
 if [ -z "$(rosversion -d)" -o "$(rosversion -d)" = "<unknown>" ]; then
   if [ -d /opt/ros  ]; then
-    __ros__version=$(find /opt/ros -maxdepth 1 -type d -printf '%P\n' | sort | tail -1)
-    if [ -z "$__version" ]; then
+    __ros_version=$(find /opt/ros -maxdepth 1 -type d -printf '%P\n' | sort | tail -1)
+    if [ -z "$__ros_version" ]; then
       echo "No ROS installation found." 1>&2
       exit 1
     fi
-    ros_path=/opt/ros/$__version
+    ros_path=/opt/ros/$__ros_version
   fi
 else
   __ros_version=$(rosversion -d)
