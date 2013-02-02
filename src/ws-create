@@ -8,24 +8,50 @@ set -u
 # This has to be in sync with the one ws-save uses
 POSTFIX="-workspace"
 
+usage(){
+  cat 1>&2 << EOF
+Create a new workspace from current directory.
+It saves the versions of any project under
+source control (not recursive) into *$POSTFIX. 
+The initialize helper script also placed there.
+After the *$POSTFIX metapackage is created, it is 
+put under vcs (git). Finally the workspace initialized using
+the script.
 
-# Do not do anything if the metapackage already exists
-metapack_dir=$(basename $(pwd))$POSTFIX
-if [ -e "$metapack_dir" ]; then
-  echo "$metapack_dir already exists." 1>&2
-  exit 1
-fi
-# Expand path
-mkdir $metapack_dir
-metapack_dir=$(cd $metapack_dir && pwd)
+To use the workspace, see ws-switch.
 
-# Generate .rosinstall
-echo "Saving current directory as a workspace.rosinstall"
-ws-save .
+Usage: $(basename $0) [-fh]
 
-# We still are tied in with ROS.
+  -f  Force workspace creatiion even if the $POSTFIX exists. 
+      Deletes the existing metapackage.
+
+  -h  Print this help message.
+EOF
+}
+
+FORCE=
+while getopts "hf" OPTION
+do
+  case $OPTION in
+    f)
+      FORCE=1
+      ;;
+    h|?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+# Do not do anything if no ROS.
+# We still depend on ROS.
 # The behavior is to use current ROS according to "rosversion", fallback on the
 # latest ROS in /opt/ros, and if no ROS there, fail.
+if [ -z "$(which rosversion)" ]; then
+  echo "ROS not found. See http://www.ros.org/wiki/ROS/Installation" 1>&2
+  exit 2
+fi
+
 if [ -z "$(rosversion -d)" -o "$(rosversion -d)" = "<unknown>" ]; then
   if [ -d /opt/ros  ]; then
     __ros__version=$(find /opt/ros -maxdepth 1 -type d -printf '%P\n' | sort | tail -1)
@@ -40,8 +66,25 @@ else
   ros_path=$(dirname $(dirname $ROS_ROOT))
 fi
 echo "Using ROS $__ros_version"
-# Do not do anything if no ROS
 
+# Do not do anything if the metapackage already exists
+metapack_dir=$(basename $(pwd))$POSTFIX
+if [ -e "$metapack_dir" ]; then
+  echo "$metapack_dir already exists." 1>&2
+  [[ -z "$FORCE" ]] && exit 1
+  echo -e "\nRemoving $metapack_dir" 1>&2
+  rm -Ivr $metapack_dir
+  echo -e "\nRemoving .rosinstall" 1>&2
+  rm -Ivr .rosinstall
+fi
+# Expand path
+mkdir $metapack_dir
+metapack_dir=$(cd $metapack_dir && pwd)
+
+
+# Generate .rosinstall
+echo "Saving current directory as a workspace.rosinstall"
+ws-save .
 
 # Use generated workspace.rosinstall and initialize overlayed workspace
 rosws init . $ros_path 
