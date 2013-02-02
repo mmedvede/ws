@@ -15,6 +15,6 @@ have ws &&
     fi
     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}))
 } &&
-    complete -o dirnames -F _ws ws
+    complete -F _ws ws
 
 # ex: ts=4 sw=4 et filetype=sh
