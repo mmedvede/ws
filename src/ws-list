@@ -9,5 +9,6 @@ set -u
 # This has to be in sync with the one ws-save uses
 POSTFIX="-workspace"
 DEPTH=4
-
-find ~ -maxdepth $DEPTH -wholename *$POSTFIX/initialize | sed -e "s/\/[^\/]*$POSTFIX.*//g"
+dir=$(pwd)
+dir=${dir//\//\\\/}
+find . -maxdepth $DEPTH -name initialize -executable -type f | grep --color=never -- "$POSTFIX" | sed -e "s/\/[^\/]*$POSTFIX.*//g" | sed -e "s/$dir//"
