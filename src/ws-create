@@ -74,6 +74,9 @@ if [ -e "$metapack_dir" ]; then
   [[ -z "$FORCE" ]] && exit 1
   echo -e "\nRemoving $metapack_dir" 1>&2
   rm -Ivr $metapack_dir
+fi
+
+if [ -e .rosinstall ]; then
   echo -e "\nRemoving .rosinstall" 1>&2
   rm -Ivr .rosinstall
 fi
