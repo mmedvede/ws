@@ -11,6 +11,7 @@ POSTFIX="-workspace"
 
 WSRC=.roswsrc
 WSRC_PATH=~/$WSRC
+ENV_FILE=~/ros_env.sh
 
 if [ "$*" = "--help" -o "$*" = "-h" ]; then
   echo "Usage:
@@ -39,9 +40,12 @@ if [ ! -f "$initialize_script" ]; then
   echo "$dir is not a supported workspace, no $initialize_script found" 1>&2
   exit 1
 fi
-if [ -n "$(grep "initialize-generate-workspace-rc" $initialize_script)" ]; then
+if [ -n "$(grep "initialize-generate-workspace-rc" $initialize_script)" -a \
+  -n "$(grep "initialize-generate-env-loader" $initialize_script)" ]; then
   $initialize_script generate-workspace-rc > $WSRC_PATH 
+  $initialize_script generate-env-loader > $ENV_FILE
   echo "(Over)writing $WSRC_PATH
+(Over)writing $ENV_FILE
   Successfully switched to $(basename $dir).
   Source $WSRC to use the selected workspace."
 else
