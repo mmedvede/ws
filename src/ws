@@ -6,19 +6,25 @@ set -e
 set -u
 
 #http://stackoverflow.com/questions/948008/linux-command-to-list-all-available-commands-and-aliases
-ListAllCommands()
-{
+__all_commands_full_paths(){
   echo -n $PATH | xargs -d : -I {} find {} -name $(basename $0)-* -maxdepth 1 \
-    -executable -type f -printf '\t%P\n'  | sed s/$(basename $0)-// |sort -u 
+    -executable -type f
 }
 
 if [ -z "$*" ]; then
   echo "Workspace tools.
 Usage:
-  $(basename $0) COMMAND
+  $(basename $0) COMMAND [-h]
 
-  Available commands:
-$(ListAllCommands)" 1>&2
+  Available commands:" 1>&2
+
+  desc_var="__short_description"
+  for command in $(__all_commands_full_paths)
+  do
+    echo -n "    $(<<< $command sed s/.*$(basename $0)-// |sort -u )  " 1>&2
+    desc=$(grep -m1 "$desc_var=" $command || true)
+    <<< $desc sed -e 's/'$desc_var'="\(.*\)"/\1/' 1>&2 
+  done
   exit 1
 fi
 

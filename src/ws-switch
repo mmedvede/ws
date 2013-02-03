@@ -13,14 +13,31 @@ WSRC=.roswsrc
 WSRC_PATH=~/$WSRC
 ENV_FILE=~/ros_env.sh
 
-if [ "$*" = "--help" -o "$*" = "-h" ]; then
-  echo "Usage:
-  $(basename $0) [<workspace_path>]
+usage(){
+  __short_description="Sets current workspace"
+  cat 1>&2 << EOF
+$__short_description
 
-  <workspace_path>: Location of the new workspace to switch into.
-    If omitted, try using current directory as a workspace." 1>&2
-  exit 0
-fi
+Usage: $(basename $0) [<WORKSPACE>] [-h]
+
+  -h  Print this help message.
+
+If workspace is ommitted, assume working directory is a desired 
+  workspace.
+
+EOF
+}
+
+while getopts "h" OPTION
+do
+  case $OPTION in
+    h|?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
 
 if [ -z "$*" ]; then
   # Case for no arguments

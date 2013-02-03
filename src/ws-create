@@ -9,16 +9,9 @@ set -u
 POSTFIX="-workspace"
 
 usage(){
+  __short_description="Create a new workspace from current directory"
   cat 1>&2 << EOF
-Create a new workspace from current directory.
-It saves the versions of any project under
-source control (not recursive) into *$POSTFIX. 
-The initialize helper script also placed there.
-After the *$POSTFIX metapackage is created, it is 
-put under vcs (git). Finally the workspace initialized using
-the script.
-
-To use the workspace, see ws-switch.
+$__short_description
 
 Usage: $(basename $0) [-fh]
 
@@ -26,6 +19,15 @@ Usage: $(basename $0) [-fh]
       Deletes the existing metapackage.
 
   -h  Print this help message.
+
+Saves the versions of all projects under
+source control (not recursive) into *$POSTFIX. 
+It also saves regular folders, but there is not way
+to maintain those unless they are under source control.
+The initialize helper script also placed in the metapackage.
+After the *$POSTFIX metapackage is created, it is 
+put under vcs (git). Finally the workspace initialized using
+the script.
 EOF
 }
 
@@ -70,7 +72,7 @@ echo "Using ROS $__ros_version"
 # Do not do anything if the metapackage already exists
 metapack_dir=$(basename $(pwd))$POSTFIX
 if [ -e "$metapack_dir" ]; then
-  echo "$metapack_dir already exists." 1>&2
+  echo "$metapack_dir already exists in working directory" 1>&2
   [[ -z "$FORCE" ]] && exit 1
   echo -e "\nRemoving $metapack_dir" 1>&2
   rm -Ivr $metapack_dir

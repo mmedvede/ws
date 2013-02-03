@@ -1,2 +1,4 @@
 #! /usr/bin/env bash
+__short_description="Equivalent to switch"
 ws-switch $*
+

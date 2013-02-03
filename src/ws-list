@@ -9,6 +9,39 @@ set -u
 # This has to be in sync with the one ws-save uses
 POSTFIX="-workspace"
 DEPTH=4
+
+usage(){
+  __short_description="Find workspaces recursively starting from working directory"
+  cat 1>&2 << EOF
+$__short_description
+
+Usage: $(basename $0) [-d <DEPTH>] [-h]
+
+  -d  Manually specify search depth
+
+  -h  Print this help message.
+
+By default, searches $DEPTH levels deep.
+Valid workspace needs to have a folder with $POSTFIX and an
+executable initialize script within it.
+
+EOF
+}
+
+while getopts "d:h" OPTION
+do
+  case $OPTION in
+    d)
+      DEPTH=$OPTARG
+      ;;
+    h|?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+
 dir=$(pwd)
 dir=${dir//\//\\\/}
 find . -maxdepth $DEPTH -name initialize -executable -type f | grep --color=never -- "$POSTFIX" | sed -e "s/\/[^\/]*$POSTFIX.*//g" | sed -e "s/$dir//"
