@@ -61,7 +61,7 @@ for dir in `ls -d -- */`; do
   dir_name=`echo $dir| sed "s/\///"`
   pushd $dir_name > /dev/null
 
-  vcs=""
+  pack_type=""
   uri=""
   version=""
   # Not supporting more than one VCS for a single directory
@@ -70,7 +70,7 @@ for dir in `ls -d -- */`; do
   # GIT
   #############################
   if [ -d ".git" ];then
-    vcs=git
+    pack_type=git
     uri=$( git remote -v | grep origin | head -n1 | cut -d' ' -f1 | sed s/origin//| tr -d '\011')
     version=$(git status | grep "On branch" | rev |cut -d' ' -f1 | rev)
     if [ -z "$version" ]; then
@@ -80,18 +80,23 @@ for dir in `ls -d -- */`; do
         version=$(git rev-parse --verify HEAD)
       fi
     fi
+    if [ -z "$uri" ]; then uri=$(pwd); fi
   #############################
   # SVN
   #############################
   elif [ -d ".svn" ];then
-    vcs=svn
+    pack_type=svn
     uri=$(svn info | grep URL |cut -d' ' -f2)
     version=r$(svn info |grep Revision | cut -d' ' -f2)
+  else
+    pack_type=other
   fi
 
-  if [ -n "$uri" ]; then
-    rosinstall_text=$rosinstall_text"- $vcs: {local-name: $dir_name, uri: ""'""$uri""'"", version: $version}\n"
-  fi
+  if [ -n "$uri" ]; then uri=",uri: ""'""$uri""'"""; fi
+  if [ -n "$version" ]; then version=",version: $version"; fi
+  local_name="local-name: ""'""$dir_name""'""" # need quotations, rosws goes belly-up
+
+  rosinstall_text=$rosinstall_text"- $pack_type: {$local_name $uri $version}\n"
   popd > /dev/null
 done
 
