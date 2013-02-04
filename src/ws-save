@@ -13,23 +13,31 @@ usage(){
 $__short_description
 
 Usage:
-  $(basename $0) [-o <OUTPUT_FILENAME>] [<WORKSPACE_PATH>] 
+  $(basename $0) [-o <OUTPUT_FILENAME>] [-C] [<WORKSPACE_PATH>] 
 
   <WORKSPACE_PATH>: Path to the workspace that you want to save.
-    If omitted, assume <WORKSPACE_PATH>=pwd
+    If omitted, assume <WORKSPACE_PATH>=pwd.
+  Packages for which no remote is specified or which are not under source control are
+    highlighted in red and marked with !. These can not be managed properly.
 
   -o  Ouput file. Default <WORKSPACE_PATH>/*$POSTFIX/workspace.rosinstall
+
+  -C  No color ouput 
 
   -h  Print this help message.
 EOF
 }
 
 OUTPUT_FILENAME=
-while getopts "ho:" OPTION
+COLOR=yes
+while getopts "ho:C" OPTION
 do
   case $OPTION in
     o)
       OUTPUT_FILENAME=$OPTARG
+      ;;
+    C)
+      COLOR=
       ;;
     h|?)
       usage
@@ -62,7 +70,7 @@ if [ ! -e "$(dirname $OUTPUT_FILENAME)" ]; then
   # Create directory if does not exists
   mkdir "$(dirname $OUTPUT_FILENAME)"
 fi
-echo "Saving $WORKSPACE_PATH workspace into $OUTPUT_FILENAME"
+echo "Saving ${WORKSPACE_PATH#$(pwd)}. workspace into .${OUTPUT_FILENAME#$(pwd)}"
 
 
 pushd $WORKSPACE_PATH > /dev/null
@@ -92,7 +100,6 @@ for dir in `ls -d -- */`; do
         version=$(git rev-parse --verify HEAD)
       fi
     fi
-    if [ -z "$uri" ]; then uri=$(pwd); fi
   #############################
   # SVN
   #############################
@@ -104,11 +111,24 @@ for dir in `ls -d -- */`; do
     pack_type=other
   fi
 
-  if [ -n "$uri" ]; then uri=",uri: ""'""$uri""'"""; fi
-  if [ -n "$version" ]; then version=",version: $version"; fi
+  # Print status line
+  color=
+  coloroff=
+  marker=" "
+  if [ -z "$uri" ]; then
+    marker="!"
+    if [ -n "$COLOR" ]; then
+      color="\033[0;31m"
+      coloroff="\033[0;m"
+    fi
+  fi
+  echo -e "$color $marker$pack_type ($version): $dir$coloroff"
+
+  if [ -n "$uri" ]; then uri=", uri: ""'""$uri""'"""; fi
+  if [ -n "$version" ]; then version=", version: $version"; fi
   local_name="local-name: ""'""$dir_name""'""" # need quotations, rosws goes belly-up
 
-  rosinstall_text=$rosinstall_text"- $pack_type: {$local_name $uri $version}\n"
+  rosinstall_text=$rosinstall_text"- $pack_type: {$local_name$uri$version}\n"
   popd > /dev/null
 done
 
