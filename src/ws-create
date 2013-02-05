@@ -13,10 +13,12 @@ usage(){
   cat 1>&2 << EOF
 $__short_description
 
-Usage: $(basename $0) [-fh]
+Usage: $(basename $0) [-fhr]
 
   -f  Force workspace creatiion even if the $POSTFIX exists. 
       Deletes the existing metapackage.
+
+  -r <REMOTE> Specify remote uri for the metapackage.
 
   -h  Print this help message.
 
@@ -32,11 +34,15 @@ EOF
 }
 
 FORCE=
-while getopts "hf" OPTION
+REMOTE=
+while getopts "hfr:" OPTION
 do
   case $OPTION in
     f)
       FORCE=1
+      ;;
+    r)
+      REMOTE=$OPTARG
       ;;
     h|?)
       usage
@@ -315,7 +321,7 @@ success="yes"
 echo "Putting it under git vcs"
 pushd $metapack_dir > /dev/null
 git init && git add . && git commit -am"[$(basename $0)] initial: saves $(basename $(dirname $metapack_dir)) workspace"
-git remote add self $(pwd)
+[[ -n $REMOTE ]] && git remote add --tags -t master -m master origin $REMOTE
 echo "Let metapackage track itself, adding it to the workspace"
 ws-save ..
 git commit -am"[$(basename $0)] initial: adds $(basename $metapack_dir) to the workspace"
