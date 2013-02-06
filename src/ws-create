@@ -228,29 +228,7 @@ initialize-eclipse-projects(){
 }
 
 initialize-generate-env-loader(){
-echo '"'"'#!/bin/sh
-# ROS Environment loader for roslaunch.
-# This file may be overwritten next time *-workspace/initialize is run.
-# The file is part of one of ROS workspaces.
-
-__this_dir=$(dirname $0)
-unset ROS_WORKSPACE
-. $__this_dir/$WSRC
-
-if [ -z "$ROS_WORKSPACE" ]; then
-  echo "Error: $__this_dir/$WSRC has to export ROS_WORKSPACE" 1>&2
-  exit 1
-fi
-
-if [ $# -eq 0 ] ; then
-  /bin/echo "Entering environment at $ROS_WORKSPACE"
-  . $ROS_WORKSPACE/setup.sh
-  $SHELL
-  /bin/echo "Exiting build environment at $ROS_WORKSPACE"
-else
-  . $ROS_WORKSPACE/setup.sh
-  exec "$@"
-fi'"'"'
+echo '"'$(ws_generate_env_loader)'"'
 }
 
 initialize-write-env-loader(){
