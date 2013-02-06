@@ -95,7 +95,7 @@ for dir in `ls -d -- */`; do
     uri=$( git remote -v | grep origin | head -n1 | cut -d' ' -f1 | sed s/origin//| tr -d '\011')
     version=$(git status | grep "On branch" | rev |cut -d' ' -f1 | rev)
     if [ -z "$version" ]; then
-      version=$(git describe --always --tags)
+      version=$(git describe --always --tags --long)
     fi
   #############################
   # SVN
