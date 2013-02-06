@@ -53,19 +53,36 @@ else
   exit 1
 fi
 initialize_script=$dir/$(basename $dir)$POSTFIX/initialize
+
+
+generate_for_unsupported(){
+  # The workspace/initialize script does not have a function to generate config files
+  # Use the fallback defaults
+  echo "Warn: $(basename $dir) is not supported version, generating default $WSRC and $ENV_FILE" 1>&2
+  echo "(Over)writing $WSRC_PATH"
+  ws_generate_workspace_rc $dir> $WSRC_PATH
+  echo "(Over)writing $ENV_FILE"
+  ws_generate_env_loader > $ENV_FILE && chmod +x $ENV_FILE
+}
+
+
 if [ ! -f "$initialize_script" ]; then
-  echo "$dir is not a supported workspace, no $initialize_script found" 1>&2
-  exit 1
-fi
-if [ -n "$(grep "initialize-generate-workspace-rc" $initialize_script)" -a \
-  -n "$(grep "initialize-generate-env-loader" $initialize_script)" ]; then
-  $initialize_script generate-workspace-rc > $WSRC_PATH 
-  $initialize_script generate-env-loader > $ENV_FILE
-  echo "(Over)writing $WSRC_PATH
-(Over)writing $ENV_FILE
-  Successfully switched to $(basename $dir).
-  Source $WSRC to use the selected workspace."
+  echo "No $initialize_script found" 1>&2
+  generate_for_unsupported
 else
-  echo "$initialize_script is not a correct version." 1>&2
-  exit 1
+  if [ -n "$(grep "initialize-generate-workspace-rc" $initialize_script)" -a \
+    -n "$(grep "initialize-generate-env-loader" $initialize_script)" ]; then
+    echo "(Over)writing $WSRC_PATH"
+    $initialize_script generate-workspace-rc > $WSRC_PATH 
+    echo "(Over)writing $ENV_FILE"
+    $initialize_script generate-env-loader > $ENV_FILE
+  else
+    echo "$initialize_script is old version" 1>&2
+    generate_for_unsupported
+  fi
 fi
+
+echo "
+  ## Switched to $(basename $dir)
+  ## to use it:
+  source $WSRC_PATH"
