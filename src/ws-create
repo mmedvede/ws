@@ -270,6 +270,7 @@ success-message(){
 if [ -z "$*" ]; then
   __draw_line = "Workspace initialization script for $name"
 
+  __source_hooks $thisdir/hooks/preall
   initialize-prerequisites
   initialize-workspace
   __source_hooks $thisdir/hooks/prebuild
@@ -278,6 +279,7 @@ if [ -z "$*" ]; then
   __source_hooks $thisdir/hooks/postbuild
   initialize-write-env-loader
   initialize-write-workspace-rc
+  __source_hooks $thisdir/hooks/postall
   success-message
 else
   initialize-$*
