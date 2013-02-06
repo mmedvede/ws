@@ -239,23 +239,15 @@ initialize-generate-env-loader  > $ENV_FILE &&
 
 
 initialize-generate-workspace-rc(){
-echo "# Current ROS workspace setting.
-# This may be overwritten next time the *-workspace/initialize script is run.
-# Feel free to edit this to manually switch the workspace.
-# The file is sourced both by ~/.bashrc and ~/ros_env.sh to obtain the current ROS workspace
-# ros_env.sh can be used in roslaunch with machine tag.
-export ROS_WORKSPACE=$ROSWS_INSTALL_DIR
-
-# Stop for non-interactive shells 
-if [ "'"'"'"$-"'"'"'" = "'"'"'"*i*"'"'"'" ]; then return 0; fi
-# 
-source "'"'"'$ROS_WORKSPACE'"'"'"/setup.bash
+echo '"'$(ws_generate_workspace_rc '"$ROSWS_INSTALL_DIR"')'"'
 
 # Below is the place to put non-essential commands that 
-# would be run each time the script is sourced from interactive shell.
+# would be run each time the workspace rc is sourced from interactive shell.
 # There are no guarantees that it would be sourced, so 
 # your system should not depend on these to work properly.
 # An example is to print out the workspace state, help messages, etc."
+
+# echo "# Status hooks"
 }
 
 initialize-write-workspace-rc(){
