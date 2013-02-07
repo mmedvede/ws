@@ -1,0 +1,80 @@
+#! /usr/bin/env bash
+# Save first level CVS in the folder to specified file as in rosinstall format.
+# Uses git's origin as url
+
+set -e
+set -u
+
+POSTFIX=-workspace
+
+usage(){
+  __short_description="Load workspace from workspace.rosinstall"
+  cat 1>&2 << EOF
+$__short_description
+
+Usage:
+  $(basename $0) [-m] [<WORKSPACE_PATH>] 
+
+  <WORKSPACE_PATH>: Path to the workspace that you want to save.
+    If omitted, use current ROS_WORKSPACE 
+
+  -m  Merge with existing .rosinstall instead of reinitializing from scratch
+EOF
+}
+
+MERGE=
+while getopts "hm" OPTION
+do
+  case $OPTION in
+    m)
+      MERGE=yes
+      ;;
+    h|?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
+if [ -z "$*" ]; then
+# Case for no arguments
+  set +u
+  if [ -n "$ROS_WORKSPACE" ]; then
+    WORKSPACE_PATH=$ROS_WORKSPACE
+  else
+    echo "ROS_WORKSPACE is not set. Please manually specify the path." 1>&1
+    exit 1
+  fi
+  set -u
+else
+  if [ -d "$1" ]; then
+    WORKSPACE_PATH=$1
+  else
+    echo "$1 is not a directory" 1>&2
+    exit 1
+  fi
+fi
+# Expand relative paths
+WORKSPACE_PATH=$(cd $WORKSPACE_PATH && pwd)
+
+ROSINSTALL_SRC=$WORKSPACE_PATH/$(basename $WORKSPACE_PATH)$POSTFIX/workspace.rosinstall
+
+echo "Working in $WORKSPACE_PATH"
+pushd $WORKSPACE_PATH > /dev/null
+
+if [ -e .rosinstall -a -z "$MERGE" ]; then
+  echo "rm .rosinstall"
+  rm .rosinstall
+fi
+
+if [ ! -e .rosinstall ]; then
+  echo "rosws init /opt/ros/$(rosversion -d) "
+  rosws init . /opt/ros/$(rosversion -d) > /dev/null
+fi
+
+# TODO Support non-standard ros install path
+# How can the ros version info be stored inside the workspace meta?
+
+echo "rosws merge $ROSINSTALL_SRC -t . "
+rosws merge $ROSINSTALL_SRC -t .

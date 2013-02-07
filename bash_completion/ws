@@ -7,7 +7,7 @@ have ws &&
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    if [ "$prev" = "switch" -o "$prev" = "select" ]; then
+    if [ "$prev" = "switch" -o "$prev" = "select" -o "$prev" = "load" ]; then
         opts=$(ws-list)
     elif [ "$prev" = "ws" ]; then
         opts=$( echo -n $PATH | xargs -d : -I {} find {} -name ws-* -maxdepth 1 \
