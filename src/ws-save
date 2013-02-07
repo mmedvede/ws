@@ -8,7 +8,7 @@ set -u
 POSTFIX=-workspace
 
 usage(){
-  __short_description="Save a workspace as rosinstall file"
+  __short_description="Save a workspace as a .rosinstall file"
   cat 1>&2 << EOF
 $__short_description
 
@@ -16,7 +16,7 @@ Usage:
   $(basename $0) [-o <OUTPUT_FILENAME>] [-C] [<WORKSPACE_PATH>] 
 
   <WORKSPACE_PATH>: Path to the workspace that you want to save.
-    If omitted, assume <WORKSPACE_PATH>=pwd.
+    If omitted, use ROS_WORKSPACE.
   Packages for which no remote is specified or which are not under source control are
     highlighted in red and marked with !. These can not be managed properly.
 
@@ -48,8 +48,15 @@ done
 shift $((OPTIND-1))
 
 if [ -z "$*" ]; then
-# Case for no arguments
-    WORKSPACE_PATH=$(pwd)
+  # Case for no arguments
+  set +u
+  if [ -n "$ROS_WORKSPACE" ]; then
+    WORKSPACE_PATH=$ROS_WORKSPACE
+  else
+    echo "ROS_WORKSPACE is not set. Please manually specify the path." 1>&1
+    exit 1
+  fi
+  set -u
 else
   if [ -d "$1" ]; then
     WORKSPACE_PATH=$1
