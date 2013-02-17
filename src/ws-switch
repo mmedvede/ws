@@ -54,6 +54,11 @@ else
 fi
 initialize_script=$dir/$(basename $dir)$POSTFIX/initialize
 
+# Check for setup.bash
+if [ ! -e "$dir/setup.bash" ]; then
+  echo "Error: No setup.bash at '$dir'" 1>&2
+  exit 1
+fi
 
 generate_for_unsupported(){
   # The workspace/initialize script does not have a function to generate config files
