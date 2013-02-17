@@ -11,7 +11,7 @@ POSTFIX="-workspace"
 DEPTH=4
 
 usage(){
-  __short_description="Find workspaces recursively starting from working directory"
+  __short_description="Find workspaces recursively starting at home directory"
   cat 1>&2 << EOF
 $__short_description
 
@@ -42,6 +42,7 @@ do
 done
 
 
-dir=$(pwd)
-dir=${dir//\//\\\/}
-find . -maxdepth $DEPTH -name initialize -executable -type f | grep --color=never -- "$POSTFIX" | sed -e "s/\/[^\/]*$POSTFIX.*//g" | sed -e "s/$dir//"
+dir=$HOME
+#dir_sed=${dir//\//\\\/}
+
+find $dir -maxdepth $DEPTH -name initialize -executable -type f | grep --color=never -- "$POSTFIX" | sed  -e "s/\/[^\/]*$POSTFIX.*//g"
