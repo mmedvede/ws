@@ -1,13 +1,10 @@
 #! /usr/bin/env bash
-# Switch the current workspace.
-# Regenerates ~/.roswsrc based on selected workspace.
+# List available workspaces.
 # author: Mikahil Medvedev <mmedvede@cs.uml.edu>
 
 set -e
 set -u
 
-# This has to be in sync with the one ws-save uses
-POSTFIX="-workspace"
 DEPTH=4
 
 usage(){
@@ -22,8 +19,7 @@ Usage: $(basename $0) [-d <DEPTH>] [-h]
   -h  Print this help message.
 
 By default, searches $DEPTH levels deep.
-Valid workspace needs to have a folder with $POSTFIX and an
-executable initialize script within it.
+Valid workspace needs to have setup.bash
 
 EOF
 }
@@ -45,4 +41,4 @@ done
 dir=$HOME
 #dir_sed=${dir//\//\\\/}
 
-find $dir -maxdepth $DEPTH -name initialize -executable -type f | grep --color=never -- "$POSTFIX" | sed  -e "s/\/[^\/]*$POSTFIX.*//g"
+find $dir -maxdepth $DEPTH -name setup.bash ! -perm /111 -type f | sed  -e "s/\/setup.bash//g"
