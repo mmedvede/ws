@@ -1,31 +1,61 @@
 #! /usr/bin/env bash
 # ws- entry point
 # Author: Mikhail Medvedev <mmedvede@cs.uml.edu>
+VERSION=0.1.2-5
 
 set -e
 set -u
 
-#http://stackoverflow.com/questions/948008/linux-command-to-list-all-available-commands-and-aliases
-__all_commands_full_paths(){
-  echo -n $PATH | xargs -d : -I {} find {} -name $(basename $0)-* -maxdepth 1 \
-    -executable -type f
-}
-
-if [ -z "$*" ]; then
-  echo "Workspace tools.
-Usage:
-  $(basename $0) COMMAND [-h]
-
-  Available commands:" 1>&2
-
+usage(){
+  __commands(){
+    #http://stackoverflow.com/questions/948008/linux-command-to-list-all-available-commands-and-aliases
+    __all_commands_full_paths(){
+      echo -n $PATH | xargs -d : -I {} find {} -name $(basename $0)-* -maxdepth 1 \
+        -executable -type f
+    }
   desc_var="__short_description"
   for command in $(__all_commands_full_paths)
   do
-    echo -n "    $(<<< $command sed s/.*$(basename $0)-// |sort -u )  " 1>&2
+    echo -en "    $(<<< $command sed s/.*$(basename $0)-// |sort -u )\t" 
     desc=$(grep -m1 "$desc_var=" $command || true)
-    <<< $desc sed -e 's/'$desc_var'="\(.*\)"/\1/' 1>&2 
+    <<< $desc sed -e 's/'$desc_var'="\(.*\)"/\1/' 
   done
-  exit 1
-fi
+  }
+  cat 1>&2 << EOF
+Workspace management tools
+Usage: $(basename $0) [-v] | [COMMAND] [-h]
 
-ws-$*
+  -v  Print version number
+
+  COMMAND:
+$(__commands)
+
+  If COMMAND is not listed above, ws runs 'rosws COMMAND' instead.
+  ws with no arguments defaults to 'rosws'.
+  Some commands support bash tab completion.
+EOF
+}
+
+while getopts "vh" OPTION
+do
+  case $OPTION in
+    v)
+      echo "$(basename $0) version $VERSION"
+      exit 0
+      ;;
+    h|?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
+
+if [ -z "$*" ]; then
+  rosws
+else
+  # if ws-$* does not exist, pass to rosws
+  hash ws-$* 2>/dev/null || rosws $* 
+  hash ws-$* 2>/dev/null && ws-$* 
+fi
