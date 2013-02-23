@@ -1,7 +1,10 @@
-WorkSpace tools
+ws - WorkSpace tools
 ================
 
-Tools that augment the standard rosws / wstool / rosinstall and add missing functionality.
+Command-line tools for workspace maintenance on top of rosws / wstool.
 
-What is missing:
- * an easy way to save the state of the workspace: rosinstall --generate-versioned-rosinstall was broken. Even if it did work, it does not make it easy to create an initial workspace from a folder full of packages under source control.
+Main functionality:
+ * Switching between workspaces
+ * Easily saving / restoring workspace from versioned copy
+ * Search for available workspaces
+ * Create workspace from a directory
