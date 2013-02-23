@@ -8,15 +8,12 @@ set -u
 POSTFIX=-workspace
 
 usage(){
-  __short_description="Load workspace from workspace.rosinstall"
+  __short_description="Reload current workspace from workspace.rosinstall"
   cat 1>&2 << EOF
 $__short_description
 
 Usage:
-  $(basename $0) [-m] [<WORKSPACE_PATH>] 
-
-  <WORKSPACE_PATH>: Path to the workspace that you want to load.
-    If omitted, use current ROS_WORKSPACE 
+  $(basename $0) [-m] 
 
   -m  Merge with existing .rosinstall instead of reinitializing from scratch
 EOF
@@ -37,24 +34,14 @@ do
 done
 shift $((OPTIND-1))
 
-if [ -z "$*" ]; then
-# Case for no arguments
-  set +u
+set +u
   if [ -n "$ROS_WORKSPACE" ]; then
     WORKSPACE_PATH=$ROS_WORKSPACE
   else
-    echo "ROS_WORKSPACE is not set. Please manually specify the path." 1>&1
+    echo "ROS_WORKSPACE is not set. Use 'ws switch'" 1>&1
     exit 1
   fi
-  set -u
-else
-  if [ -d "$1" ]; then
-    WORKSPACE_PATH=$1
-  else
-    echo "$1 is not a directory" 1>&2
-    exit 1
-  fi
-fi
+set -u
 # Expand relative paths
 WORKSPACE_PATH=$(cd $WORKSPACE_PATH && pwd)
 
