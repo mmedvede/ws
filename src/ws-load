@@ -15,7 +15,7 @@ $__short_description
 Usage:
   $(basename $0) [-m] [<WORKSPACE_PATH>] 
 
-  <WORKSPACE_PATH>: Path to the workspace that you want to save.
+  <WORKSPACE_PATH>: Path to the workspace that you want to load.
     If omitted, use current ROS_WORKSPACE 
 
   -m  Merge with existing .rosinstall instead of reinitializing from scratch
