@@ -113,6 +113,7 @@ WSRC_PATH=''~/''$WSRC
 ENV_FILE=''~/ros_env.sh''
 
 set -e
+set -o pipefail
 
 # Check for correct ROS version and source corresponding setup.bash
 ROS_VERSION='$__ros_version'
