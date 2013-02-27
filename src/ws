@@ -31,7 +31,7 @@ Usage: $(basename $0) [-v] | [COMMAND] [-h]
 $(__commands)
 
   If COMMAND is not listed above, ws runs 'rosws COMMAND' instead.
-  ws with no arguments defaults to 'rosws'.
+  ws with no arguments defaults to 'rosws info --untracked'.
   Some commands support bash tab completion.
 EOF
 }
@@ -53,7 +53,7 @@ shift $((OPTIND-1))
 
 
 if [ -z "$*" ]; then
-  rosws
+  rosws info --untracked
 else
   # if ws-$* does not exist, pass to rosws
   hash ws-$* 2>/dev/null || rosws $* 
