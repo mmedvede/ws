@@ -55,7 +55,5 @@ shift $((OPTIND-1))
 if [ -z "$*" ]; then
   rosws info --untracked
 else
-  # if ws-$* does not exist, pass to rosws
-  hash ws-$* 2>/dev/null || rosws $* 
-  hash ws-$* 2>/dev/null && ws-$* 
+  ws-$*
 fi
