@@ -1,0 +1,49 @@
+#! /usr/bin/env bash
+
+set -e
+set -u
+
+POSTFIX=-workspace
+
+usage(){
+  __short_description="Pull down the latest workspace configuration and update workspace repositories"
+  cat 1>&2 << EOF
+$__short_description
+
+Usage:
+  $(basename $0) [-h] 
+
+EOF
+}
+
+while getopts "h" OPTION
+do
+  case $OPTION in
+    h|?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
+set +u
+  if [ -n "$ROS_WORKSPACE" ]; then
+    WORKSPACE_PATH=$ROS_WORKSPACE
+  else
+    echo "ROS_WORKSPACE is not set. Use 'ws switch'" 1>&1
+    exit 1
+  fi
+set -u
+# Expand relative paths
+WORKSPACE_PATH=$(cd $WORKSPACE_PATH && pwd)
+
+WORKSPACE_META=$WORKSPACE_PATH/$(basename $WORKSPACE_PATH)$POSTFIX
+
+echo "Working in $WORKSPACE_META"
+
+pushd $WORKSPACE_META >/dev/null
+git pull
+ws load
+rosws update -j8
+rosmake -a
