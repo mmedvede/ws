@@ -149,6 +149,7 @@ fi
 #################################################
 # Helper functions
 green=$(echo -e "\033[0;32m")
+yellow=$(echo -e "\033[0;33m")
 red=$(echo -e "\033[0;31m")
 grey=$(echo -e "\033[0;90m")
 bwhite=$(echo -e "\033[1;37m")
@@ -165,15 +166,16 @@ __draw_line(){
   echo -e "\n$grey$line$text_color$text$grey$line$no_color"
 }
 
+fail_list="" # stash of things run with exec that exited with non-zero
 __exec_longrunning(){
   echo "$*$grey "
-  $* 2>&1 | cut -b1-$(tput cols) | sed -u "i\\o033[2K" | stdbuf -o0 tr "\n" "\r"
+  $* 2>&1 | cut -b1-$(tput cols) | sed -u "i\\o033[2K" | stdbuf -o0 tr "\n" "\r" || fail_list+="\n$?: $*"
   echo $no_color
 }
 
 __exec(){
   echo "$*$grey "
-  $*
+  $* || fail_list+="\n$?: $*"
   echo $no_color
 }
 
@@ -197,6 +199,13 @@ __unsuccessfull_exit(){
   if [ -z "$success" ]; then
     __draw_line ^ "Did not finish, check any errors" $red
   fi
+
+  if [ -n "$fail_list" ]; then
+   __draw_line ^ "WARNING" $yellow
+   echo "  Some invocations returned non-zero:"
+     echo -e "$fail_list"
+  fi
+
 } &&
   trap __unsuccessfull_exit EXIT
 
@@ -206,7 +215,7 @@ ROSINSTALL_FILE=$thisdir/workspace.rosinstall
 
 initialize-prerequisites(){
   __draw_line + "Setting up tools required to initialize the workspace"
-  __exec_longrunning sudo apt-get install -y --force-yes python-rosinstall 
+  __exec_longrunning sudo apt-get install -y --force-yes python-rosinstall
 }
 
 initialize-workspace()
@@ -215,7 +224,24 @@ initialize-workspace()
   # Overlay over current ROS environment
   __exec rosinstall $ROSWS_INSTALL_DIR $(dirname $(dirname $ROS_ROOT)) $ROSINSTALL_FILE
 
-  source $ROSWS_INSTALL_DIR/setup.bash
+  __exec source $ROSWS_INSTALL_DIR/setup.bash
+}
+
+initialize-sys-dependencies(){
+  __draw_line + "Installing system dependencies through rosdep"
+
+  if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
+    __exec sudo rosdep init 
+  fi
+  __exec rosdep update
+
+  # same as "rosdep install -a", but ignores standard ros packages (in /opt/ros)
+  # rosdep install -a does not work for Fuerte
+  packagelist=$(rospack list | grep -v /opt/ros | cut -d' ' -f1)
+  for package in $packagelist; do
+    packages+=" $package"
+  done
+  __exec rosdep install $packages
 }
 
 initialize-build-workspace(){
@@ -274,6 +300,7 @@ if [ -z "$*" ]; then
   __source_hooks $thisdir/hooks/preall
   initialize-prerequisites
   initialize-workspace
+  initialize-sys-dependencies
   __source_hooks $thisdir/hooks/prebuild
   initialize-build-workspace
   initialize-eclipse-projects
