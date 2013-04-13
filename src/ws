@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 # ws- entry point
 # Author: Mikhail Medvedev <mmedvede@cs.uml.edu>
-VERSION=0.1.3-6-gad1d615
+VERSION=0.1.3-9-g7eb6889
 
 set -e
 set -u
