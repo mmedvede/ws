@@ -105,6 +105,17 @@ for dir in `ls -d -- */`; do
       version=$(git describe --always --tags --long)
     fi
   #############################
+  # MERCURIAL
+  #############################
+  elif [ -d ".hg" ];then
+    pack_type=hg
+    # Prefer default
+    uri=$( hg paths |grep default | head -n1 | cut -d' ' -f3)
+    version=$(hg branch)
+    if [ -z "$version" ]; then
+      version=$(hg log -r . --template '{latesttag}-{latesttagdistance}-{node|short}\n')
+    fi
+  #############################
   # SVN
   #############################
   elif [ -d ".svn" ];then
