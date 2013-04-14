@@ -84,13 +84,11 @@ pushd $WORKSPACE_PATH > /dev/null
 
 # We are now at the location, crawl first-level CVS and get info
 rosinstall_text=""
-for dir in `ls -d -- */`; do
-  dir_name=`echo $dir| sed "s/\///"`
-  pushd $dir_name > /dev/null
-
+gen_rosinstall_entry(){
   pack_type=""
   uri=""
   version=""
+  unknown_cvs=""
   # Not supporting more than one VCS for a single directory
 
   #############################
@@ -124,6 +122,7 @@ for dir in `ls -d -- */`; do
     version=r$(svn info |grep Revision | cut -d' ' -f2)
   else
     pack_type=other
+    unknown_cvs=yes
   fi
 
   if [ -z "$uri" ]; then
@@ -131,26 +130,71 @@ for dir in `ls -d -- */`; do
     pack_type=other
   fi
 
-  # Print status line
-  color=
-  coloroff=
-  marker=" "
-  if [ -z "$uri" ]; then
-    marker="!"
-    if [ -n "$COLOR" ]; then
-      color="\033[0;31m"
-      coloroff="\033[0;m"
-    fi
-  fi
-  echo -e "$color $marker$pack_type ($version): $dir$coloroff"
+  current_dir="$(pwd)"
+  rel_name=${current_dir##$WORKSPACE_PATH/}
+
+  # Print status line - disabled, as we do not have full info about recursion
+  #color=
+  #coloroff=
+  #marker=" "
+  #if [ -z "$uri" ]; then
+    #marker="!"
+    #if [ -n "$COLOR" ]; then
+      #color="\033[0;31m"
+      #coloroff="\033[0;m"
+    #fi
+  #fi
+  #if [ -z "$unknown_cvs" ]; then
+    #echo -e "$color $marker$pack_type ($version): $rel_name$coloroff" 1>&2
+  #fi
 
   if [ -n "$uri" ]; then uri=", uri: ""'""$uri""'"""; fi
   if [ -n "$version" ]; then version=", version: $version"; fi
-  local_name="local-name: ""'""$dir_name""'""" # need quotations, rosws goes belly-up
+  local_name="local-name: ""'""$rel_name""'""" # need quotations, rosws goes belly-up
 
-  rosinstall_text=$rosinstall_text"- $pack_type: {$local_name$uri$version}\n"
-  popd > /dev/null
-done
+  echo "- $pack_type: {$local_name$uri$version}\n"
+  if [ -z "$unknown_cvs" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+yellow="\033[0;33m"
+coloroff="\033[0;m"
+
+recurse(){
+  local count=$1
+  count=$((count-1))
+  if [ "$count" -le 0 ]; then
+    # Uncmment to save deepest folders as other
+    #rosinstall_text=$rosinstall_text"$(gen_rosinstall_entry || true)"
+    echo -en "$yellow Skipped:$coloroff $(gen_rosinstall_entry || true)"
+    return
+  else
+
+    repo=$(gen_rosinstall_entry) && rosinstall_text=$rosinstall_text"$repo" && return
+    
+    dir_list=$(ls -d -- */ 2> /dev/null || true)
+    if [ -z "$dir_list" ]; then
+      # Uncomment to save folders with no subfolders as other
+      #rosinstall_text=$rosinstall_text"$repo"
+      echo -en "$yellow Skipped:$coloroff $repo"
+      return 
+    fi
+    for dir in $dir_list; do
+      dir_name=`echo $dir| sed "s/\///"`
+      pushd $dir_name > /dev/null
+      recurse $count
+      popd > /dev/null
+    done
+
+  fi
+}
+
+recurse 4
+
+echo -e $rosinstall_text
 
 popd > /dev/null
 
