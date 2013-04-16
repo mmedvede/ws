@@ -30,7 +30,6 @@ Usage: $(basename $0) [-v] | [COMMAND] [-h]
   COMMAND:
 $(__commands)
 
-  If COMMAND is not listed above, ws runs 'rosws COMMAND' instead.
   ws with no arguments defaults to 'rosws info --untracked'.
   Some commands support bash tab completion.
 EOF
