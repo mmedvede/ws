@@ -1,0 +1,103 @@
+#! /usr/bin/env bash
+# Clean current workspace's working directory by
+# comparing its contents to workspace.rosinstall.
+# Uses ws-save to create a .rosinstall to compare with.
+
+set -e
+set -u
+
+POSTFIX=-workspace
+TRASH=".trash"
+
+usage(){
+  __short_description="Clean active workspace"
+  cat 1>&2 << EOF
+$__short_description
+
+Usage:
+  $(basename $0) [-h -n]
+
+  -n  Dry run, would list all entries to be moved into $TRASH directory.
+
+  -h  Print this help message.
+
+  No folders or files are deleted, items are moved into
+  $TRASH directory of an active workspace. It is up to you
+  to empty the directory.
+
+  We obtain the list of items to be removed by comparing contents
+  of workspace.rosinstall with actual contents of the active
+  workspace. Items that are in the workspace but not in the
+  workspace.rosinstall would be removed.
+EOF
+}
+
+DRY=
+while getopts "nh" OPTION
+do
+  case $OPTION in
+    n)
+      DRY=yes
+      ;;
+    h|?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
+set +u
+if [ -n "$ROS_WORKSPACE" ]; then
+  WORKSPACE_PATH=$ROS_WORKSPACE
+else
+  echo "ROS_WORKSPACE is not set. Please manually specify the path." 1>&2
+  exit 1
+fi
+set -u
+# Expand relative paths
+WORKSPACE_PATH=$(cd $WORKSPACE_PATH && pwd)
+ROSINSTALL_SRC=$WORKSPACE_PATH/$(basename $WORKSPACE_PATH)$POSTFIX/workspace.rosinstall
+
+ROSINSTALL_CURRENT=$(mktemp)
+ws-save -o $ROSINSTALL_CURRENT>/dev/null
+
+# Create sorted lists of local names from both rosinstalls
+extract_local(){
+  <$1 grep  "local-name" | sed "s/^.*local-name:[ '"'"'"]\+\([^,}{'"'"'"]\+\).*$/\1/" | sort -u
+}
+
+# Use diff to compare the lists, have to dump one list into a temp file
+src_tmp=$(mktemp)
+extract_local $ROSINSTALL_SRC > $src_tmp
+deletion_list=$(extract_local $ROSINSTALL_CURRENT | diff $src_tmp - | grep ">" | sed "s/> //")
+
+# cleanup
+rm $ROSINSTALL_CURRENT
+rm $src_tmp
+
+clean(){
+  yellow="\033[0;33m"
+  coloroff="\033[0;m"
+  pushd $WORKSPACE_PATH > /dev/null
+  echo "Working in $(pwd)"
+  trash=$TRASH/$$ # Use process number as unique id
+  for item in $deletion_list; do
+    if [ -n "$DRY" ]; then
+      echo -e "Would remove $yellow$item$coloroff"
+    else
+      echo -en "Removing $yellow$item$coloroff: "
+      [[ ! -d "$trash" ]] && mkdir -p $trash &> /dev/null
+      mkdir -p $trash/$(dirname $item)/
+      mv -v $item $trash/$item/
+      rmdir $(dirname $item) &> /dev/null || true # do not leave empty directories
+    fi
+  done
+}
+
+if [ -z "$deletion_list" ]; then
+  echo "Active workspace is clean"
+else
+  clean
+fi
+
