@@ -53,7 +53,7 @@ if [ -z "$*" ]; then
   if [ -n "$ROS_WORKSPACE" ]; then
     WORKSPACE_PATH=$ROS_WORKSPACE
   else
-    echo "ROS_WORKSPACE is not set. Please manually specify the path." 1>&1
+    echo "ROS_WORKSPACE is not set. Please manually specify the path." 1>&2
     exit 1
   fi
   set -u

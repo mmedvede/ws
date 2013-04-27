@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 set -e
 set -u
@@ -31,7 +31,7 @@ set +u
   if [ -n "$ROS_WORKSPACE" ]; then
     WORKSPACE_PATH=$ROS_WORKSPACE
   else
-    echo "ROS_WORKSPACE is not set. Use 'ws switch'" 1>&1
+    echo "ROS_WORKSPACE is not set. Use 'ws switch'" 1>&2
     exit 1
   fi
 set -u
