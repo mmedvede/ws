@@ -10,7 +10,7 @@ usage(){
   __commands(){
     #http://stackoverflow.com/questions/948008/linux-command-to-list-all-available-commands-and-aliases
     __all_commands_full_paths(){
-      echo -n $PATH | xargs -d : -I {} find {} -name $(basename $0)-* -maxdepth 1 \
+      echo -n $PATH | xargs -d : -I {} find {} -name "$(basename $0)-*" -maxdepth 1 \
         -executable -type f
     }
   desc_var="__short_description"
